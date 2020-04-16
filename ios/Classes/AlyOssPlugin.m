@@ -41,9 +41,8 @@ OSSClient *oss = nil;
 }
 
 - (void)upload:(FlutterMethodCall*)call result:(FlutterResult)result {
-    if (oss == nil) {
-        [self init: call];
-    }
+    
+    [self init: call];
     
     NSString *instanceId = call.arguments[@"instanceId"];
     NSString *requestId = call.arguments[@"requestId"];
@@ -94,9 +93,8 @@ OSSClient *oss = nil;
 }
 
 - (void)delete:(FlutterMethodCall*)call result:(FlutterResult)result {
-    if (oss == nil) {
-        [self init: call];
-    }
+    
+    [self init: call];
     
     NSString *instanceId = call.arguments[@"instanceId"];
     NSString *requestId = call.arguments[@"requestId"];

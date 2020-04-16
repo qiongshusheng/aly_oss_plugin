@@ -17,6 +17,7 @@ import com.alibaba.sdk.android.oss.model.PutObjectResult;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
+
 import io.flutter.Log;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -26,6 +27,8 @@ public class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
     private final MethodChannel channel;
     private final PluginRegistry.Registrar registrar;
     private OSS oss;
+    private String currentEndpoint;
+
 
     MethodCallHandlerImpl(MethodChannel channel, PluginRegistry.Registrar registrar) {
         this.channel = channel;
@@ -61,11 +64,31 @@ public class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
         conf.setMaxErrorRetry(2); // 失败后最大重试次数，默认2次
 
         oss = new OSSClient(registrar.context(), endpoint, credentialProvider, conf);
+        currentEndpoint = endpoint;
+    }
+
+    private void updateOss(MethodCall call) {
+
+        if (call.argument("endpoint") == currentEndpoint) {
+            final String accessKeyId = call.argument("accessKeyId");
+            final String accessKeySecret = call.argument("accessKeySecret");
+            final String securityToken = call.argument("securityToken");
+//        final String expiration = call.argument("expiration");
+            final String endpoint = call.argument("endpoint");
+            Log.i("update ", "accessKeyId=" + accessKeyId + ", accessKeySecret=" + accessKeySecret + ", securityToken=" + securityToken + ", endpoint=" + endpoint);
+            final OSSCredentialProvider credentialProvider = new OSSStsTokenCredentialProvider(accessKeyId, accessKeySecret, securityToken);
+            oss.updateCredentialProvider(credentialProvider);
+            currentEndpoint = endpoint;
+        } else {
+            init(call);
+        }
     }
 
     private void upload(MethodCall call, MethodChannel.Result result) {
         if (oss == null) {
             init(call);
+        } else {
+            updateOss(call);
         }
         final String instanceId = call.argument("instanceId");
         final String requestId = call.argument("requestId");
@@ -146,6 +169,8 @@ public class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
     private void delete(MethodCall call, MethodChannel.Result result) {
         if (oss == null) {
             init(call);
+        } else {
+            updateOss(call);
         }
 
         final String instanceId = call.argument("instanceId");
